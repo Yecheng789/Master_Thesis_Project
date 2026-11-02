@@ -3,7 +3,7 @@
   "description": "Controller-state timestamps used to align the three operator-confirmed successful Splash retrieval experiments for paper figures.",
   "timestamp_provenance": {
     "method": "Controller transition messages were matched to sample time_ros_s; events.csv contains logger start/stop only.",
-    "evidence_file": "three_success_controller_event_evidence.txt"
+    "evidence_file": "three-success-controller-event-evidence.md"
   },
   "trials": [
     {

@@ -5,7 +5,7 @@ fixed-target retrieval experiment with Glub using ROS 2 Jazzy. Paths are
 selected through `BLUEROV_WS`, `ACADOS_SOURCE_DIR`, and `TRIALS_DIR`.
 After installation, complete the [environment setup](../../README.md#environment-setup)
 in every new ROS terminal before running the commands below. For Splash, use the
-[Splash operator guide](SPLASH_FIXED_HOOK_ZH.md).
+[Splash operator guide](splash-fixed-hook-guide.md).
 
 The robot approaches pre-hook, aligns to the recorded attitude, moves forward
 to Hook, holds for operator confirmation, and reverses to pre-hook:

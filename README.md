@@ -142,8 +142,8 @@ Follow the complete procedure for the selected robot, including target
 recording, preflight checks, Offboard permission, manual arming, and shutdown.
 The guides use the same environment setup and path variables defined above:
 
-- [Glub operator guide](experiments/payload_retrieval/FIXED_HOOK_POSE_VALIDATION_ZH.md)
-- [Splash operator guide](experiments/payload_retrieval/SPLASH_FIXED_HOOK_ZH.md)
+- [Glub operator guide](experiments/payload_retrieval/glub-fixed-hook-guide.md)
+- [Splash operator guide](experiments/payload_retrieval/splash-fixed-hook-guide.md)
 
 If no DDS Agent is already running, and PX4 is configured for this computer
 on UDP port 8888, start one in a dedicated terminal:

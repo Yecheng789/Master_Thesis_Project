@@ -26,7 +26,7 @@ Neither launch selects a target automatically. Do not copy target quaternions
 between robots or edit a recording's provenance to make it pass validation.
 Re-record after changes to the box position, rigid-body geometry, axes, or
 mounting. The optional Splash rename manifest is valid only under the
-conditions in the [Splash guide](SPLASH_FIXED_HOOK_ZH.md); a Glub-to-Splash
+conditions in the [Splash guide](splash-fixed-hook-guide.md); a Glub-to-Splash
 target transfer must not be used.
 
 Pass `acados_source_dir:="$ACADOS_SOURCE_DIR"` and
@@ -48,14 +48,14 @@ including their CSV files and metadata, under
 
 These datasets are not included in a source-only checkout. Preserve the
 associated [phase annotations](../../scripts/three_success_trial_annotations.json)
-and [controller-event evidence](../../scripts/three_success_controller_event_evidence.txt).
+and [controller-event evidence](../../scripts/three-success-controller-event-evidence.md).
 
 ## Reproduction
 
 ### Record a target and run control
 
-Follow the [Glub](FIXED_HOOK_POSE_VALIDATION_ZH.md) or
-[Splash](SPLASH_FIXED_HOOK_ZH.md) operator guide for the complete terminal
+Follow the [Glub](glub-fixed-hook-guide.md) or
+[Splash](splash-fixed-hook-guide.md) operator guide for the complete terminal
 sequence. Keep automatic control stopped during manual positioning and target
 recording. For Glub:
 
