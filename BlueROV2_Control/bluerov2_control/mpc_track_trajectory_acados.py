@@ -29,6 +29,7 @@ from bluerov2_control.models.fossen_bluerov2_model import (
 from bluerov2_control.models.fossen_bluerov2_model_real import (
     build_bluerov2_fossen_model as build_bluerov2_fossen_model_real,
 )
+from bluerov2_control.path_defaults import px4_autopilot_dir
 from bluerov2_control.planner_astar import (
     OccupancyGrid2D as PlannerOccupancyGrid2D,
     inflate_rect as planner_inflate_rect,
@@ -752,8 +753,20 @@ class MPCTrackTrajectoryAcados(Node):
             "fixed_hook_line_velocity_weight_multiplier",
             1.0,
         )
-        self.declare_parameter("world_sdf_path", "/home/yecheng/PX4-Autopilot/Tools/simulation/gz/worlds/kth_marinarium.sdf")
-        self.declare_parameter("tank_model_sdf_path", "/home/yecheng/PX4-Autopilot/Tools/simulation/gz/models/kth_tank/model.sdf")
+        self.declare_parameter(
+            "world_sdf_path",
+            str(
+                px4_autopilot_dir()
+                / "Tools/simulation/gz/worlds/kth_marinarium.sdf"
+            ),
+        )
+        self.declare_parameter(
+            "tank_model_sdf_path",
+            str(
+                px4_autopilot_dir()
+                / "Tools/simulation/gz/models/kth_tank/model.sdf"
+            ),
+        )
         self.declare_parameter("astar_resolution", 0.15)
         self.declare_parameter("astar_robot_radius", 0.20)
         self.declare_parameter("astar_obstacle_margin", 0.10)

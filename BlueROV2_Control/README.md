@@ -63,7 +63,35 @@ analysis and tests, also install Matplotlib, pandas, and pytest.
 Set `BLUEROV_WS` to the workspace root and `ACADOS_SOURCE_DIR` to the
 acados installation. Set `TRIALS_DIR` to the trial-data directory. Use the
 same values in every terminal. The launch commands below explicitly pass
-the solver and output locations instead of relying on site-specific defaults.
+the solver and output locations. Explicit ROS parameters, launch arguments,
+and command-line options override the environment-derived defaults.
+
+### Filesystem paths
+
+Defaults use the current user's home directory, not a fixed account name.
+Set these environment variables to absolute paths to use a different
+installation:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `BLUEROV_WS` | `$HOME/bluerov_ws` | ROS workspace |
+| `TRIALS_DIR` | `$BLUEROV_WS/bluerov2_payload_retrieval_trials` | Trial data and analysis input |
+| `ACADOS_SOURCE_DIR` | `$HOME/acados` | Solver source and shared libraries |
+| `PX4_AUTOPILOT_DIR` | `$HOME/PX4-Autopilot` | PX4 checkout containing Gazebo world/model assets |
+| `PX4_WS` | `$HOME/px4_ws` | Separate PX4 workspace whose conflicting message overlay the optional helper removes |
+
+Unset or empty variables use the defaults above. Required software and model
+files must still exist at the chosen locations. The simulation parameters
+`world_sdf_path` and `tank_model_sdf_path` can override the default paths
+under `PX4_AUTOPILOT_DIR` independently.
+
+Without `--output-file`, the target recorder writes to
+`$BLUEROV_WS/target_poses/hooked_box_target_pose_raw.json`, outside the source
+and installation directories. It still refuses to overwrite an existing
+file unless `--overwrite` is explicitly supplied. The operator guides use
+explicit, timestamped output filenames.
+
+### Experiment settings
 
 | Setting | Required configuration |
 | --- | --- |
@@ -86,7 +114,7 @@ the solver and output locations instead of relying on site-specific defaults.
 ### Environment setup
 
 Run this block in each fresh ROS terminal before using the reproduction
-commands or operator guides. Use these commands instead of the site-specific
+commands or operator guides. Use these commands instead of the profile-specific
 environment helper; do not source that helper afterward.
 
 ```bash

@@ -14,6 +14,7 @@ from bluerov2_control.nav_odom_to_vehicle_odometry import (
     _quat_xyzw_to_matrix,
 )
 from bluerov2_control.offboard_enable import versioned_px4_topic
+from bluerov2_control.path_defaults import acados_dir, trials_dir
 from bluerov2_control.planner_astar import (
     OccupancyGrid2D as PlannerOccupancyGrid2D,
     line_segment_is_free as planner_line_segment_is_free,
@@ -2389,14 +2390,11 @@ def generate_launch_description():
         DeclareLaunchArgument('source_component_id', default_value='191'),
         DeclareLaunchArgument(
             'trial_output_dir',
-            default_value=(
-                '/home/yecheng/bluerov_ws/'
-                'bluerov2_payload_retrieval_trials'
-            ),
+            default_value=str(trials_dir()),
         ),
         DeclareLaunchArgument('trial_id', default_value=''),
         DeclareLaunchArgument(
-            'acados_source_dir', default_value='/home/yecheng/acados'
+            'acados_source_dir', default_value=str(acados_dir())
         ),
         DeclareLaunchArgument('rebuild_solver', default_value='false'),
         OpaqueFunction(function=_launch_setup),

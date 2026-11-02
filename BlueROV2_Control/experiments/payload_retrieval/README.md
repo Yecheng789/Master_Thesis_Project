@@ -7,7 +7,7 @@ Build `px4_msgs` and `bluerov2_control` using the
 Install Matplotlib and pandas for plots, and pytest for functional tests.
 Complete the [environment setup](../../README.md#environment-setup) in each
 fresh ROS terminal. Use the same `BLUEROV_WS`, `ACADOS_SOURCE_DIR`, and
-`TRIALS_DIR` values throughout the experiment; do not source the site-specific
+`TRIALS_DIR` values throughout the experiment; do not source the profile-specific
 environment helper afterward.
 
 ## Configuration requirements

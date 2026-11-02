@@ -67,6 +67,27 @@ to analyze the recorded trials. The fixed-target results and the detector
 weights are separate artifacts, not evidence of a completed visual closed-loop
 retrieval experiment.
 
+### Use the handle detector
+
+Download `handle_v4.pt` from the release and install Ultralytics with a
+compatible PyTorch build in a separate Python environment. CPU loading and
+inference are verified with Ultralytics `8.4.40` and PyTorch `2.14.1+cpu`.
+The model contains trained weights and the `handle` class definition; the
+original training dataset and the paths recorded in its training metadata
+are not required for prediction.
+
+```python
+from ultralytics import YOLO
+
+model = YOLO("handle_v4.pt")
+results = model.predict(source="image.jpg", device="cpu", save=True)
+```
+
+Replace `image.jpg` with an image or video to process. See the
+[Ultralytics prediction guide](https://docs.ultralytics.com/modes/predict/)
+for supported input types. A working inference call does not establish
+detection accuracy or authorize autonomous vehicle operation.
+
 ## Safety
 
 Real-vehicle operation requires validated frames, fresh state feedback,

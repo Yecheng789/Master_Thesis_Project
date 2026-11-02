@@ -1,3 +1,4 @@
+from bluerov2_control.path_defaults import trials_dir
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
@@ -45,7 +46,7 @@ def generate_launch_description():
             DeclareLaunchArgument("trial_id", default_value=""),
             DeclareLaunchArgument(
                 "output_dir",
-                default_value="/home/yecheng/bluerov_ws/bluerov2_payload_retrieval_trials",
+                default_value=str(trials_dir()),
             ),
             DeclareLaunchArgument("sample_period_s", default_value="0.05"),
             DeclareLaunchArgument("metadata_file", default_value=""),

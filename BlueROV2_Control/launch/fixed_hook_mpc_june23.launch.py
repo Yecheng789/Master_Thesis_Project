@@ -2,6 +2,7 @@
 """Compatibility wrapper for the guarded fixed-hook reality validation."""
 
 from ament_index_python.packages import get_package_share_directory
+from bluerov2_control.path_defaults import acados_dir, trials_dir
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -150,11 +151,9 @@ DEFAULTS = {
     'target_component_id': '1',
     'source_system_id': '1',
     'source_component_id': '191',
-    'trial_output_dir': (
-        '/home/yecheng/bluerov_ws/bluerov2_payload_retrieval_trials'
-    ),
+    'trial_output_dir': '',
     'trial_id': '',
-    'acados_source_dir': '/home/yecheng/acados',
+    'acados_source_dir': '',
     'rebuild_solver': 'false',
     'target_min_samples': '80',
     'target_min_sampling_span_sec': '0.75',
@@ -166,12 +165,18 @@ DEFAULTS = {
 
 def generate_launch_description():
     """Forward the old launch name to the new fail-closed experiment."""
+    # Resolve environment-backed paths for each launch, not when imported.
+    defaults = {
+        **DEFAULTS,
+        'trial_output_dir': str(trials_dir()),
+        'acados_source_dir': str(acados_dir()),
+    }
     launch_path = (
         get_package_share_directory('bluerov2_control')
         + '/launch/fixed_hook_pose_validation.launch.py'
     )
     declarations = [
-        DeclareLaunchArgument(name, default_value=DEFAULTS[name])
+        DeclareLaunchArgument(name, default_value=defaults[name])
         for name in FORWARDED_ARGUMENTS
     ]
     included = IncludeLaunchDescription(

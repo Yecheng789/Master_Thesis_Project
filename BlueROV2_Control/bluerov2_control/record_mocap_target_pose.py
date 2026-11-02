@@ -17,6 +17,8 @@ from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 
+from bluerov2_control.path_defaults import target_pose_output_file
+
 
 Vector3 = Tuple[float, float, float]
 Quaternion = Tuple[float, float, float, float]
@@ -466,11 +468,7 @@ def parse_args(argv=None) -> Tuple[argparse.Namespace, Sequence[str]]:
     )
     parser.add_argument(
         "--output-file",
-        default=(
-            "/home/yecheng/bluerov_ws/src/bluerov2_control/"
-            "experiments/payload_retrieval/config/"
-            "hooked_box_target_pose_raw.json"
-        ),
+        default=str(target_pose_output_file()),
     )
     parser.add_argument(
         "--overwrite",

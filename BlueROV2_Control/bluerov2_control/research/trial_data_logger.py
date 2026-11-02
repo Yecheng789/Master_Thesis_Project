@@ -31,6 +31,8 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
 from std_msgs.msg import Bool, Float32, String
 
+from bluerov2_control.path_defaults import trials_dir
+
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
@@ -200,7 +202,7 @@ class PayloadRetrievalDataLogger(Node):
         self.declare_parameter("trial_id", "")
         self.declare_parameter(
             "output_dir",
-            "/home/yecheng/bluerov_ws/bluerov2_payload_retrieval_trials",
+            str(trials_dir()),
         )
         self.declare_parameter("sample_period_s", 0.05)
         self.declare_parameter("flush_every_n_samples", 10)

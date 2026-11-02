@@ -81,7 +81,7 @@ Stop if either build fails. Complete the [environment setup](../../README.md#env
 in every new ROS terminal and repeat it after rebuilding. It checks the selected workspace's
 `px4_msgs` and configures Fast DDS. Expected prefix: `$BLUEROV_WS/install/px4_msgs`;
 ACK/Status message versions: `0 1`. Do not source another PX4 workspace or the
-site-specific helper afterward.
+profile-specific helper afterward.
 
 ## 3. Terminals 1 and 2: DDS Agent and QGC
 

@@ -80,7 +80,7 @@ source install/local_setup.bash
 Stop if either build fails. Complete the [environment setup](../../README.md#environment-setup)
 in every new ROS terminal and repeat it after rebuilding. It loads the selected
 workspace, configures ROS/acados and RMW, and checks the PX4 overlay and message
-versions. Do not source another PX4 workspace or the site-specific helper
+versions. Do not source another PX4 workspace or the profile-specific helper
 afterward. Environment setup does not configure the robot network, start
 Offboard, or arm the vehicle.
 
