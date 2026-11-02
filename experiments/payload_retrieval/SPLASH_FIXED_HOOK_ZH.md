@@ -9,6 +9,10 @@ Splash uses PX4 namespace `/splash`, MoCap rigid body `splash`, and raw pose top
 `/mocap/splash/pose`. The launch requires an explicitly selected target file; it does not
 choose one automatically. Do not use a Glub target or copy another robot's quaternion.
 
+Paths are selected through `BLUEROV_WS`, `ACADOS_SOURCE_DIR`, and `TRIALS_DIR`.
+After installation, complete the [environment setup](../../README.md#environment-setup)
+in every new ROS terminal before running the commands below.
+
 ## 1. Safety and operating limits
 
 Keep a qualified operator at QGroundControl (QGC) throughout the run. Verify manual control,
@@ -60,21 +64,24 @@ Build with the ROV disarmed and all control launches stopped. First verify that
 `src/px4_msgs` matches the deployed firmware:
 
 ```bash
-cd /home/yecheng/bluerov_ws
+export BLUEROV_WS="${BLUEROV_WS:-$HOME/bluerov_ws}"
+export ACADOS_SOURCE_DIR="${ACADOS_SOURCE_DIR:-$HOME/acados}"
+
+cd "$BLUEROV_WS"
 source /opt/ros/jazzy/setup.bash
-export ACADOS_SOURCE_DIR=/home/yecheng/acados
-export LD_LIBRARY_PATH=/home/yecheng/acados/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH="$ACADOS_SOURCE_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 colcon build --packages-select px4_msgs --symlink-install --cmake-clean-cache
 source install/local_setup.bash
 colcon build --packages-select bluerov2_control --symlink-install
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
+source install/local_setup.bash
 ```
 
-Stop if either build or the environment check fails. Every ROS terminal below sources this
-helper, which selects the workspace's firmware-matched `px4_msgs` and Fast DDS environment.
-Expected prefix: `/home/yecheng/bluerov_ws/install/px4_msgs`; ACK/Status message versions:
-`0 1`. Do not source an older PX4 workspace overlay afterward.
+Stop if either build fails. Complete the [environment setup](../../README.md#environment-setup)
+in every new ROS terminal and repeat it after rebuilding. It checks the selected workspace's
+`px4_msgs` and configures Fast DDS. Expected prefix: `$BLUEROV_WS/install/px4_msgs`;
+ACK/Status message versions: `0 1`. Do not source another PX4 workspace or the
+site-specific helper afterward.
 
 ## 3. Terminals 1 and 2: DDS Agent and QGC
 
@@ -98,8 +105,8 @@ configuration instead. Do not start duplicate Agents.
 Start QGC in Terminal 2:
 
 ```bash
-cd /home/yecheng/Downloads
-./QGroundControl-x86_64.AppImage
+export QGC_APPIMAGE="${QGC_APPIMAGE:-$HOME/Downloads/QGroundControl-x86_64.AppImage}"
+"$QGC_APPIMAGE"
 ```
 
 Connect to the correct ROV and keep it disarmed. In QGC's MAVLink Console, inspect and save
@@ -125,8 +132,6 @@ parameters blindly. Confirm the manual takeover and emergency-stop tests before 
 ## 4. Terminal 3: check live PX4 and MoCap data
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
-
 ros2 pkg prefix px4_msgs
 python3 -c "from px4_msgs.msg import VehicleCommandAck as A, VehicleStatus as S; print('ACK/Status =', A.MESSAGE_VERSION, S.MESSAGE_VERSION)"
 ros2 topic list --no-daemon --spin-time 5 | sort | grep -E '^/splash/fmu/'
@@ -150,8 +155,6 @@ The `timeout` commands deliberately end after 20 seconds.
 Check raw MoCap in the same terminal:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
-
 ros2 topic info -v /mocap/splash/pose
 ros2 topic echo /mocap/splash/pose --once --qos-profile sensor_data
 timeout 20s ros2 topic hz /mocap/splash/pose
@@ -170,7 +173,6 @@ with the physical ROV. If orientation calibration is required, keep automatic co
 stopped, hold a known level calibration pose, and run:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
 ros2 run bluerov2_control calibrate_mocap_orientation_correction \
   --topic /mocap/splash/pose --samples 160
 ```
@@ -186,7 +188,6 @@ conventions, and correction. Do not substitute a Glub quaternion or a startup tr
 Before manual piloting, verify that no ROS controller owns any PX4 control input:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
 ros2 topic info -v /splash/fmu/in/offboard_control_mode
 ros2 topic info -v /splash/fmu/in/vehicle_command
 ros2 topic info -v /splash/fmu/in/vehicle_thrust_setpoint
@@ -198,10 +199,9 @@ pilot Splash to engage the hook, let the ROV and box settle, and hold the actual
 to be reproduced. Keep automatic control stopped while recording:
 
 ```bash
-cd /home/yecheng/bluerov_ws
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
+cd "$BLUEROV_WS"
 
-TARGET_CFG=/home/yecheng/bluerov_ws/src/bluerov2_control/experiments/payload_retrieval/config/hooked_box_target_pose_splash_$(date +%Y%m%d_%H%M%S).json
+TARGET_CFG="$BLUEROV_WS/src/bluerov2_control/experiments/payload_retrieval/config/hooked_box_target_pose_splash_$(date +%Y%m%d_%H%M%S).json"
 if ros2 run bluerov2_control record_mocap_target_pose \
   --topic /mocap/splash/pose \
   --message-type pose \
@@ -236,9 +236,9 @@ target pose all unchanged. If any condition cannot be confirmed, record a new ta
 Inspect the manifest and its unchanged source:
 
 ```bash
-TARGET_CFG=/home/yecheng/bluerov_ws/src/bluerov2_control/experiments/payload_retrieval/config/hooked_box_target_pose_splash_from_splash_fb_20260819_170318.json
+TARGET_CFG="$BLUEROV_WS/src/bluerov2_control/experiments/payload_retrieval/config/hooked_box_target_pose_splash_from_splash_fb_20260819_170318.json"
 python3 -m json.tool "$TARGET_CFG"
-sha256sum /home/yecheng/bluerov_ws/src/bluerov2_control/experiments/payload_retrieval/config/hooked_box_target_pose_splash_20260819_170318.json
+sha256sum "$BLUEROV_WS/src/bluerov2_control/experiments/payload_retrieval/config/hooked_box_target_pose_splash_20260819_170318.json"
 ```
 
 The source SHA-256 must be exactly:
@@ -258,11 +258,10 @@ marked `invalidated_for_control` must never be used.
 Start recording before moving from the manually hooked pose:
 
 ```bash
-cd /home/yecheng/bluerov_ws
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
+cd "$BLUEROV_WS"
 
-BAG_DIR=/home/yecheng/bluerov_ws/fixed_hook_bags/splash_fixed_hook_$(date +%Y%m%d_%H%M%S)
-mkdir -p /home/yecheng/bluerov_ws/fixed_hook_bags
+BAG_DIR="$BLUEROV_WS/fixed_hook_bags/splash_fixed_hook_$(date +%Y%m%d_%H%M%S)"
+mkdir -p "$BLUEROV_WS/fixed_hook_bags"
 echo "Bag directory: $BAG_DIR"
 ACK_TOPIC=$(python3 -c "from px4_msgs.msg import VehicleCommandAck as M; v=int(M.MESSAGE_VERSION); print('/splash/fmu/out/vehicle_command_ack'+(f'_v{v}' if v else ''))")
 STATUS_TOPIC=$(python3 -c "from px4_msgs.msg import VehicleStatus as M; v=int(M.MESSAGE_VERSION); print('/splash/fmu/out/vehicle_status'+(f'_v{v}' if v else ''))")
@@ -301,13 +300,14 @@ handle moved, return to Section 5 and record a new target.
 Select the exact target you checked; do not automatically choose the newest file:
 
 ```bash
-cd /home/yecheng/bluerov_ws
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
+cd "$BLUEROV_WS"
 
 read -r -p 'Absolute path of the validated Splash target JSON: ' TARGET_CFG
 if [[ "$TARGET_CFG" = /* ]] && test -f "$TARGET_CFG"; then
   ros2 launch bluerov2_control fixed_hook_pose_validation_splash.launch.py \
-    target_config:="$TARGET_CFG"
+    target_config:="$TARGET_CFG" \
+    acados_source_dir:="$ACADOS_SOURCE_DIR" \
+    trial_output_dir:="$TRIALS_DIR"
 else
   echo 'No launch: select an existing target file using its absolute path.'
 fi
@@ -324,7 +324,7 @@ The startup summary must show the selected target, NED Hook/pre-hook poses, oper
 `Fixed-hook Position-like translation`. Leave this terminal visible for phase and fault logs.
 
 The logger prints a unique trial directory under
-`/home/yecheng/bluerov_ws/bluerov2_payload_retrieval_trials/`. Note that exact directory.
+`$TRIALS_DIR/`. Note that exact directory.
 It writes `samples.csv` at a nominal `20` Hz, `events.csv`, and `metadata.json`, including the selected
 target/configuration and raw `raw_mocap_*` pose columns. This complements, not replaces,
 the rosbag and video. Verify that files are being created and that recording storage is
@@ -333,8 +333,6 @@ available before enabling motion.
 ## 8. Terminal 7: static preflight
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
-
 ros2 node list | sort | grep -E 'fixed_hook|mocap_ekf|offboard_enable'
 ros2 topic info -v /splash/fmu/in/offboard_control_mode
 ros2 topic info -v /splash/fmu/in/vehicle_command
@@ -377,7 +375,6 @@ Do not enable motion if the solver, logger, DDS feedback, or any safety check re
 With QGC showing DISARMED, clear startup permission latches and monitor ACKs in Terminal 8:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
 ros2 topic pub --once /bluerov2/fixed_hook/mission_enable std_msgs/msg/Bool '{data: false}'
 ros2 topic pub --once /bluerov2/fixed_hook/offboard_request_enable std_msgs/msg/Bool '{data: false}'
 
@@ -388,7 +385,6 @@ ros2 topic echo "$ACK_TOPIC" --qos-profile sensor_data
 After preflight passes and the safety operator is ready, request Offboard in Terminal 9:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
 ros2 topic pub --once /bluerov2/fixed_hook/offboard_request_enable std_msgs/msg/Bool '{data: true}'
 ros2 topic echo /splash/fmu/out/vehicle_control_mode --once --qos-profile sensor_data
 ```
@@ -402,7 +398,6 @@ the mode; an ACK alone is insufficient. Do not proceed on stale or absent feedba
 Open a separate terminal for Hook confirmation and leave it in the foreground:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
 ros2 run bluerov2_control confirm_hook_keyboard
 ```
 
@@ -412,7 +407,6 @@ ARM manually in QGC with personnel clear and the operator ready; the launch
 never ARMs for you. In Terminal 9, recheck the actual state:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
 ros2 topic echo /splash/fmu/out/vehicle_control_mode --once --qos-profile sensor_data
 ```
 
@@ -421,7 +415,6 @@ Mission permission is still false: the ROV is not yet under a position-holding m
 Enable motion only after the final safety check and confirmation that recording is active:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
 ros2 run bluerov2_control mark_trial_event start --note 'Splash fixed-hook mission enabled'
 ros2 topic pub --once /bluerov2/fixed_hook/mission_enable std_msgs/msg/Bool '{data: true}'
 ```
@@ -460,7 +453,6 @@ and pressing a new `H`; early keypresses are not saved for later.
 After observing completed retreat and a stable hold, mark the result:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
 ros2 run bluerov2_control mark_trial_event success --note 'Splash hook confirmed; retreat completed'
 ```
 
@@ -470,7 +462,6 @@ Prepare for the loss of active thrust and supervise the buoyant ROV. DISARM in Q
 and verify the thrusters have stopped. Then clear both permissions and mark the stop:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
 ros2 topic pub --once /bluerov2/fixed_hook/mission_enable std_msgs/msg/Bool '{data: false}'
 ros2 topic pub --once /bluerov2/fixed_hook/offboard_request_enable std_msgs/msg/Bool '{data: false}'
 ros2 run bluerov2_control mark_trial_event stop --note 'Operator stopped Splash fixed-hook mission'
@@ -499,7 +490,6 @@ attitude jumps, or solver faults, DISARM first and verify stopped thrusters. The
 permissions if the nodes are still running:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
 ros2 topic pub --once /bluerov2/fixed_hook/mission_enable std_msgs/msg/Bool '{data: false}'
 ros2 topic pub --once /bluerov2/fixed_hook/offboard_request_enable std_msgs/msg/Bool '{data: false}'
 ```

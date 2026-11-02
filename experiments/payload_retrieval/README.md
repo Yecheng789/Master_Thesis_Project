@@ -5,11 +5,10 @@
 Build `px4_msgs` and `bluerov2_control` using the
 [package installation instructions](../../README.md#installation).
 Install Matplotlib and pandas for plots, and pytest for functional tests.
-Load the fixed-target environment in each ROS terminal:
-
-```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
-```
+Complete the [environment setup](../../README.md#environment-setup) in each
+fresh ROS terminal. Use the same `BLUEROV_WS`, `ACADOS_SOURCE_DIR`, and
+`TRIALS_DIR` values throughout the experiment; do not source the site-specific
+environment helper afterward.
 
 ## Configuration requirements
 
@@ -20,8 +19,8 @@ source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_r
 | State feedback | Fresh MoCap/EKF pose and PX4 BODY_FRD angular rates |
 | Frames and pool | Verified NED/FRD conversion, pool origin, measured bounds, and obstacle clearance |
 | Control ownership | One robot profile and one control stack; manual takeover available |
-| Automatic CSV output | `/home/yecheng/bluerov_ws/bluerov2_payload_retrieval_trials` |
-| Rosbag output below | `/home/yecheng/bluerov_ws/fixed_hook_bags` |
+| Automatic CSV output | `$TRIALS_DIR` |
+| Rosbag output below | `$BLUEROV_WS/fixed_hook_bags` |
 
 Neither launch selects a target automatically. Do not copy target quaternions
 between robots or edit a recording's provenance to make it pass validation.
@@ -30,6 +29,9 @@ mounting. The optional Splash rename manifest is valid only under the
 conditions in the [Splash guide](SPLASH_FIXED_HOOK_ZH.md); a Glub-to-Splash
 target transfer must not be used.
 
+Pass `acados_source_dir:="$ACADOS_SOURCE_DIR"` and
+`trial_output_dir:="$TRIALS_DIR"` to the selected launch, as shown in the
+[controller launch command](../../README.md#2-launch-the-selected-robot-profile).
 The guarded launch already starts the CSV logger. Do not launch another
 controller or legacy data-collection stack alongside it. Each trial directory
 contains `samples.csv`, `events.csv`, and `metadata.json`.
@@ -38,7 +40,7 @@ conditions using the [metadata template](config/trial_metadata_template.json).
 
 Paper-figure reproduction requires the original three trial directories,
 including their CSV files and metadata, under
-`/home/yecheng/bluerov_ws/bluerov2_payload_retrieval_trials`:
+`$TRIALS_DIR`:
 
 - `retrieval_box_near_the_front_success`
 - `retrieval_right_side_of_the_box_success`
@@ -58,10 +60,9 @@ sequence. Keep automatic control stopped during manual positioning and target
 recording. For Glub:
 
 ```bash
-cd /home/yecheng/bluerov_ws
-source src/bluerov2_control/scripts/source_fixed_hook_real.bash
+cd "$BLUEROV_WS"
 
-TARGET_CFG="$PWD/src/bluerov2_control/experiments/payload_retrieval/config/hooked_box_target_pose_glub_$(date +%Y%m%d_%H%M%S).json"
+TARGET_CFG="$BLUEROV_WS/src/bluerov2_control/experiments/payload_retrieval/config/hooked_box_target_pose_glub_$(date +%Y%m%d_%H%M%S).json"
 
 if ros2 run bluerov2_control record_mocap_target_pose \
   --topic /mocap/glub/pose \
@@ -95,13 +96,12 @@ Use this in a dedicated terminal before starting the control launch. Select
 the same robot profile as the controller:
 
 ```bash
-cd /home/yecheng/bluerov_ws
-source src/bluerov2_control/scripts/source_fixed_hook_real.bash
+cd "$BLUEROV_WS"
 
 read -r -p 'Robot profile (glub or splash): ' ROBOT_NAME
 if [[ "$ROBOT_NAME" == glub || "$ROBOT_NAME" == splash ]]; then
-  BAG_DIR="$PWD/fixed_hook_bags/fixed_hook_${ROBOT_NAME}_$(date +%Y%m%d_%H%M%S)"
-  mkdir -p "$PWD/fixed_hook_bags"
+  BAG_DIR="$BLUEROV_WS/fixed_hook_bags/fixed_hook_${ROBOT_NAME}_$(date +%Y%m%d_%H%M%S)"
+  mkdir -p "$BLUEROV_WS/fixed_hook_bags"
 
   ACK_SUFFIX=$(python3 -c "from px4_msgs.msg import VehicleCommandAck as M; v=int(M.MESSAGE_VERSION); print(f'_v{v}' if v else '')")
   STATUS_SUFFIX=$(python3 -c "from px4_msgs.msg import VehicleStatus as M; v=int(M.MESSAGE_VERSION); print(f'_v{v}' if v else '')")
@@ -140,8 +140,7 @@ a `COMPLETE` event alone does not verify successful hook engagement.
 In an offline analysis terminal, select an existing trial directory:
 
 ```bash
-cd /home/yecheng/bluerov_ws
-source src/bluerov2_control/scripts/source_fixed_hook_real.bash
+cd "$BLUEROV_WS"
 
 read -r -p 'Trial directory (absolute path): ' TRIAL_DIR
 if [[ "$TRIAL_DIR" == /* && -d "$TRIAL_DIR" ]]; then
@@ -161,11 +160,11 @@ With the three original trial directories available, write figures to a
 new output directory without replacing the existing publication figures:
 
 ```bash
-cd /home/yecheng/bluerov_ws
-FIGURE_DIR=$(mktemp -d "$PWD/bluerov2_payload_retrieval_trials/paper_figures.XXXXXX")
+cd "$BLUEROV_WS"
+FIGURE_DIR=$(mktemp -d "$TRIALS_DIR/paper_figures.XXXXXX")
 
 MPLCONFIGDIR=/tmp/bluerov-paper-mpl python3 \
   src/bluerov2_control/scripts/plot_three_success_trials.py \
-  --trials-root "$PWD/bluerov2_payload_retrieval_trials" \
+  --trials-root "$TRIALS_DIR" \
   --output-dir "$FIGURE_DIR"
 ```

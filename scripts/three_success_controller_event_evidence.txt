@@ -3,10 +3,11 @@
 The original controller logs are outside the trial folders. This compact record
 preserves the log hash and transition timestamps used by
 `three_success_trial_annotations.json`. Timestamps are ROS seconds.
+Source paths use `$HOME` for the original logging account's home directory.
 
 ## retrieval_box_near_the_front_success
 
-Source: `/home/yecheng/.ros/log/python3_67408_1788100394397.log`
+Source: `$HOME/.ros/log/python3_67408_1788100394397.log`
 SHA-256: `4552248ed306cc664beb56ea6c250d2012ca00c50d97396895ed28fed8c01d88`
 
 - 1788100404.582152827 — Mission enabled
@@ -19,7 +20,7 @@ SHA-256: `4552248ed306cc664beb56ea6c250d2012ca00c50d97396895ed28fed8c01d88`
 
 ## retrieval_right_side_of_the_box_success
 
-Source: `/home/yecheng/.ros/log/python3_128824_1788107938088.log`
+Source: `$HOME/.ros/log/python3_128824_1788107938088.log`
 SHA-256: `74ee1102d810547eaa50ee6fbfdd073eb49417d5f040a7a32db38cb271dd22ae`
 
 - 1788107946.647991530 — Mission enabled
@@ -32,7 +33,7 @@ SHA-256: `74ee1102d810547eaa50ee6fbfdd073eb49417d5f040a7a32db38cb271dd22ae`
 
 ## retrieval_directly_in_front_of_the_box_success
 
-Source: `/home/yecheng/.ros/log/python3_47011_1788166926020.log`
+Source: `$HOME/.ros/log/python3_47011_1788166926020.log`
 SHA-256: `b834bed2c12d15300d9599b1881337f460b1a100904db1f6943a60594c16371b`
 
 - 1788166936.309943609 — Mission enabled

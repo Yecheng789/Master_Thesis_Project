@@ -8,16 +8,21 @@ Python interface, shared libraries, and template renderer. NumPy, CasADi,
 and `acados_template` must be importable by the Python interpreter used by
 ROS. Install Micro XRCE-DDS Agent and QGroundControl separately.
 
-For a new workspace:
+Choose the workspace and acados locations using the variables below. The
+defaults use the current user's home directory; override them to use another
+installation. Clone only when creating a new workspace:
 
 ```bash
-mkdir -p /home/yecheng/bluerov_ws/src
+export BLUEROV_WS="${BLUEROV_WS:-$HOME/bluerov_ws}"
+export ACADOS_SOURCE_DIR="${ACADOS_SOURCE_DIR:-$HOME/acados}"
+
+mkdir -p "$BLUEROV_WS/src"
 git clone https://github.com/Yecheng789/Bluerov2_Glub.git \
-  /home/yecheng/bluerov_ws/src/bluerov2_control
+  "$BLUEROV_WS/src/bluerov2_control"
 ```
 
 Place the PX4 message sources matching the deployed firmware at
-`/home/yecheng/bluerov_ws/src/px4_msgs` before building. This repository does
+`$BLUEROV_WS/src/px4_msgs` before building. This repository does
 not include PX4 firmware, acados, a MoCap driver, or recorded trial datasets.
 
 With the vehicle DISARMED and control launches stopped, run the following
@@ -25,11 +30,13 @@ from a fresh Bash terminal. Initialize rosdep first if it has not been
 configured on this computer.
 
 ```bash
-cd /home/yecheng/bluerov_ws
+export BLUEROV_WS="${BLUEROV_WS:-$HOME/bluerov_ws}"
+export ACADOS_SOURCE_DIR="${ACADOS_SOURCE_DIR:-$HOME/acados}"
+
+cd "$BLUEROV_WS"
 source /opt/ros/jazzy/setup.bash
 
-export ACADOS_SOURCE_DIR=/home/yecheng/acados
-export LD_LIBRARY_PATH=/home/yecheng/acados/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH="$ACADOS_SOURCE_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 rosdep update
 rosdep install --from-paths src/bluerov2_control src/px4_msgs \
@@ -40,7 +47,7 @@ colcon build --packages-select px4_msgs --symlink-install
 source install/local_setup.bash
 colcon build --packages-select bluerov2_control --symlink-install
 
-source src/bluerov2_control/scripts/source_fixed_hook_real.bash
+source install/local_setup.bash
 ```
 
 Stop if an import, build, or environment check fails. CasADi is installed
@@ -49,9 +56,10 @@ analysis and tests, also install Matplotlib, pandas, and pytest.
 
 ## Configuration requirements
 
-Commands use the lab paths `/home/yecheng/bluerov_ws` and
-`/home/yecheng/acados`. For another installation, update path-dependent
-settings in the environment helper and launch files before use.
+Set `BLUEROV_WS` to the workspace root and `ACADOS_SOURCE_DIR` to the
+acados installation. Set `TRIALS_DIR` to the trial-data directory. Use the
+same values in every terminal. The launch commands below explicitly pass
+the solver and output locations instead of relying on site-specific defaults.
 
 | Setting | Required configuration |
 | --- | --- |
@@ -71,10 +79,46 @@ settings in the environment helper and launch files before use.
 | Normalized thrust / torque limits | `0.12 / 0.02` |
 | Hook confirmation | Operator `H` in `WAIT_HOOK` starts retreat; no automatic wait timeout |
 
-Source the environment helper in each ROS terminal. Do not source a different
-PX4 workspace afterward. If the firmware uses different message versions,
-resolve the firmware/interface compatibility before proceeding; changing topic
-suffixes or bypassing the helper is not a valid substitute.
+### Environment setup
+
+Run this block in each fresh ROS terminal before using the reproduction
+commands or operator guides. Use these commands instead of the site-specific
+environment helper; do not source that helper afterward.
+
+```bash
+export BLUEROV_WS="${BLUEROV_WS:-$HOME/bluerov_ws}"
+export ACADOS_SOURCE_DIR="${ACADOS_SOURCE_DIR:-$HOME/acados}"
+export TRIALS_DIR="${TRIALS_DIR:-$BLUEROV_WS/bluerov2_payload_retrieval_trials}"
+
+source /opt/ros/jazzy/setup.bash
+source "$BLUEROV_WS/install/local_setup.bash"
+
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+export LD_LIBRARY_PATH="$ACADOS_SOURCE_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+python3 - <<'PY'
+import os
+from pathlib import Path
+from ament_index_python.packages import get_package_prefix
+from px4_msgs.msg import VehicleCommandAck, VehicleStatus
+
+expected = (Path(os.environ["BLUEROV_WS"]) / "install" / "px4_msgs").resolve()
+actual = Path(get_package_prefix("px4_msgs")).resolve()
+versions = (VehicleCommandAck.MESSAGE_VERSION, VehicleStatus.MESSAGE_VERSION)
+if actual != expected or versions != (0, 1):
+    raise SystemExit("PX4 overlay/version mismatch: stop and check the installation.")
+if not (Path(os.environ["ACADOS_SOURCE_DIR"]) / "lib").is_dir():
+    raise SystemExit("acados library directory is missing: stop and check the installation.")
+print("Fixed-target environment verified.")
+PY
+```
+
+Stop on any setup or validation error. Do not source a different PX4 workspace
+afterward. If the firmware uses different message versions, resolve the
+firmware/interface compatibility before proceeding; changing topic suffixes
+or bypassing validation is not a valid substitute.
+
+### Hardware configuration
 
 Live MoCap and PX4 BODY_FRD angular-rate feedback are required. Synchronize
 the measurement and control clocks. Verify pool coordinates, target provenance,
@@ -95,7 +139,8 @@ topics. Keep QGC, manual takeover, and an emergency stop available.
 ### 1. Start communication and recording
 
 Follow the complete procedure for the selected robot, including target
-recording, preflight checks, Offboard permission, manual arming, and shutdown:
+recording, preflight checks, Offboard permission, manual arming, and shutdown.
+The guides use the same environment setup and path variables defined above:
 
 - [Glub operator guide](experiments/payload_retrieval/FIXED_HOOK_POSE_VALIDATION_ZH.md)
 - [Splash operator guide](experiments/payload_retrieval/SPLASH_FIXED_HOOK_ZH.md)
@@ -107,11 +152,12 @@ on UDP port 8888, start one in a dedicated terminal:
 micro-xrce-dds-agent udp4 -p 8888
 ```
 
-Open QGC in another terminal:
+Open QGC in another terminal. Set `QGC_APPIMAGE` to its installed location
+if it differs from the default:
 
 ```bash
-cd /home/yecheng/Downloads
-./QGroundControl-x86_64.AppImage
+export QGC_APPIMAGE="${QGC_APPIMAGE:-$HOME/Downloads/QGroundControl-x86_64.AppImage}"
+"$QGC_APPIMAGE"
 ```
 
 Before starting control, record the target using the selected operator guide
@@ -121,11 +167,11 @@ Manually position the robot at a safe starting point, then DISARM.
 ### 2. Launch the selected robot profile
 
 Complete the guide's frame, target, feedback, and publisher checks first.
-In a dedicated terminal, choose one robot and provide its validated target:
+In a dedicated terminal, complete [environment setup](#environment-setup),
+then choose one robot and provide its validated target:
 
 ```bash
-cd /home/yecheng/bluerov_ws
-source src/bluerov2_control/scripts/source_fixed_hook_real.bash
+cd "$BLUEROV_WS"
 
 read -r -p 'Robot profile (glub or splash): ' ROBOT_NAME
 read -r -p 'Validated target JSON (absolute path): ' TARGET_CFG
@@ -138,7 +184,9 @@ esac
 
 if [[ -n "$FIXED_HOOK_LAUNCH" && "$TARGET_CFG" == /* && -r "$TARGET_CFG" ]]; then
   ros2 launch bluerov2_control "$FIXED_HOOK_LAUNCH" \
-    target_config:="$TARGET_CFG"
+    target_config:="$TARGET_CFG" \
+    acados_source_dir:="$ACADOS_SOURCE_DIR" \
+    trial_output_dir:="$TRIALS_DIR"
 else
   echo 'Select glub or splash and a readable absolute target path.'
 fi
@@ -161,10 +209,10 @@ Use the selected guide's separate permission commands in this order:
    active recording, and a clear travel corridor.
 5. Mark the trial start and publish `mission_enable=true` as shown in the guide.
 
-Keep the Hook-confirmation client in its own foreground terminal:
+After [environment setup](#environment-setup), keep the Hook-confirmation
+client in its own foreground terminal:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
 ros2 run bluerov2_control confirm_hook_keyboard
 ```
 
@@ -184,11 +232,11 @@ or emergency stop immediately. Zero thrust is not position holding.
 Use the [experiment reproduction guide](experiments/payload_retrieval/README.md)
 for trial analysis and paper-figure commands.
 
-Run functional tests from the workspace root, with no live control launch:
+Complete [environment setup](#environment-setup), then run functional tests
+from the workspace root with no live control launch:
 
 ```bash
-cd /home/yecheng/bluerov_ws
-source src/bluerov2_control/scripts/source_fixed_hook_real.bash
+cd "$BLUEROV_WS"
 python3 -m pytest -q src/bluerov2_control/test \
   --ignore=src/bluerov2_control/test/test_copyright.py \
   --ignore=src/bluerov2_control/test/test_flake8.py \

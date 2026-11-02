@@ -1121,7 +1121,8 @@ success.
 ## Reproduce
 
 ```bash
-cd /home/yecheng/bluerov_ws
+export BLUEROV_WS="${{BLUEROV_WS:-$HOME/bluerov_ws}}"
+cd "$BLUEROV_WS"
 MPLCONFIGDIR=/tmp/bluerov_paper_mpl python3 \\
   src/bluerov2_control/scripts/plot_three_success_trials.py
 ```

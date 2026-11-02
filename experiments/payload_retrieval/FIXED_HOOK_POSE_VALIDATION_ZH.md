@@ -1,8 +1,10 @@
 # Glub Fixed-Hook Experiment: Operator Guide
 
 Use this procedure to record a hook-engagement pose and run a supervised
-fixed-target retrieval experiment with Glub. Commands assume the lab workspace
-at `/home/yecheng/bluerov_ws` and ROS 2 Jazzy. For Splash, use the
+fixed-target retrieval experiment with Glub using ROS 2 Jazzy. Paths are
+selected through `BLUEROV_WS`, `ACADOS_SOURCE_DIR`, and `TRIALS_DIR`.
+After installation, complete the [environment setup](../../README.md#environment-setup)
+in every new ROS terminal before running the commands below. For Splash, use the
 [Splash operator guide](SPLASH_FIXED_HOOK_ZH.md).
 
 The robot approaches pre-hook, aligns to the recorded attitude, moves forward
@@ -60,23 +62,27 @@ With the robot DISARMED and control launches stopped, build from a fresh Bash
 terminal. Confirm that `src/px4_msgs` matches the deployed PX4 firmware first.
 
 ```bash
-cd /home/yecheng/bluerov_ws
+export BLUEROV_WS="${BLUEROV_WS:-$HOME/bluerov_ws}"
+export ACADOS_SOURCE_DIR="${ACADOS_SOURCE_DIR:-$HOME/acados}"
+
+cd "$BLUEROV_WS"
 source /opt/ros/jazzy/setup.bash
 
-export ACADOS_SOURCE_DIR=/home/yecheng/acados
-export LD_LIBRARY_PATH=/home/yecheng/acados/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH="$ACADOS_SOURCE_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 colcon build --packages-select px4_msgs --symlink-install --cmake-clean-cache
 source install/local_setup.bash
 colcon build --packages-select bluerov2_control --symlink-install
 
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
+source install/local_setup.bash
 ```
 
-Stop if either build or the environment check fails. Source the helper in
-every ROS terminal and again after rebuilding. Do not source another PX4
-workspace afterward. The helper configures ROS/acados paths and RMW; it does
-not configure the robot network, start Offboard, or arm the vehicle.
+Stop if either build fails. Complete the [environment setup](../../README.md#environment-setup)
+in every new ROS terminal and repeat it after rebuilding. It loads the selected
+workspace, configures ROS/acados and RMW, and checks the PX4 overlay and message
+versions. Do not source another PX4 workspace or the site-specific helper
+afterward. Environment setup does not configure the robot network, start
+Offboard, or arm the vehicle.
 
 ## 2. Start the DDS Agent
 
@@ -102,8 +108,8 @@ host, port, or serial connection. Do not start a duplicate Agent.
 Keep QGC open throughout the experiment:
 
 ```bash
-cd /home/yecheng/Downloads
-./QGroundControl-x86_64.AppImage
+export QGC_APPIMAGE="${QGC_APPIMAGE:-$HOME/Downloads/QGroundControl-x86_64.AppImage}"
+"$QGC_APPIMAGE"
 ```
 
 Confirm connection to the intended vehicle. Test joystick axes, mode
@@ -117,8 +123,6 @@ fallback mode is suitable for an underwater vehicle.
 In a diagnostic terminal:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
-
 ros2 pkg prefix px4_msgs
 python3 -c "from px4_msgs.msg import VehicleCommandAck as A, VehicleStatus as S; print('ACK/Status =', A.MESSAGE_VERSION, S.MESSAGE_VERSION)"
 ros2 topic list | sort | grep -E '^/glub/fmu/(in|out)/'
@@ -130,7 +134,7 @@ ros2 topic echo /glub/fmu/out/vehicle_control_mode --once --qos-profile sensor_d
 timeout 5s ros2 topic hz /glub/fmu/out/vehicle_control_mode
 ```
 
-The expected package prefix is `/home/yecheng/bluerov_ws/install/px4_msgs`,
+The expected package prefix is `$BLUEROV_WS/install/px4_msgs`,
 with ACK/Status versions `0 1`. The status message must identify the intended
 vehicle (`system_id: 3`, `component_id: 1` for this profile). DDS topic names
 alone are insufficient: feedback must actually arrive and agree with QGC.
@@ -182,7 +186,6 @@ Keep automatic control stopped. Before manual positioning, confirm that all
 four PX4 input topics have **zero publishers**; PX4 subscriptions are expected:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
 ros2 topic info -v /glub/fmu/in/offboard_control_mode
 ros2 topic info -v /glub/fmu/in/vehicle_command
 ros2 topic info -v /glub/fmu/in/vehicle_thrust_setpoint
@@ -193,10 +196,9 @@ Manually engage the hook and let the vehicle and box settle at the pose to be
 reproduced. Record from Glub's raw MoCap topic:
 
 ```bash
-cd /home/yecheng/bluerov_ws
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
+cd "$BLUEROV_WS"
 
-TARGET_CFG=/home/yecheng/bluerov_ws/src/bluerov2_control/experiments/payload_retrieval/config/hooked_box_target_pose_glub_$(date +%Y%m%d_%H%M%S).json
+TARGET_CFG="$BLUEROV_WS/src/bluerov2_control/experiments/payload_retrieval/config/hooked_box_target_pose_glub_$(date +%Y%m%d_%H%M%S).json"
 
 if ros2 run bluerov2_control record_mocap_target_pose \
   --topic /mocap/glub/pose \
@@ -228,11 +230,10 @@ marker geometry, rigid-body frame, or mounting changes. Do not edit
 Before launching control, start rosbag in a dedicated terminal:
 
 ```bash
-cd /home/yecheng/bluerov_ws
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
+cd "$BLUEROV_WS"
 
-BAG_DIR=/home/yecheng/bluerov_ws/fixed_hook_bags/fixed_hook_glub_$(date +%Y%m%d_%H%M%S)
-mkdir -p /home/yecheng/bluerov_ws/fixed_hook_bags
+BAG_DIR="$BLUEROV_WS/fixed_hook_bags/fixed_hook_glub_$(date +%Y%m%d_%H%M%S)"
+mkdir -p "$BLUEROV_WS/fixed_hook_bags"
 
 ACK_TOPIC=$(python3 -c "from px4_msgs.msg import VehicleCommandAck as M; v=int(M.MESSAGE_VERSION); print('/glub/fmu/out/vehicle_command_ack'+(f'_v{v}' if v else ''))")
 STATUS_TOPIC=$(python3 -c "from px4_msgs.msg import VehicleStatus as M; v=int(M.MESSAGE_VERSION); print('/glub/fmu/out/vehicle_status'+(f'_v{v}' if v else ''))")
@@ -277,13 +278,14 @@ when prompted. The launch requires an explicit target; it does not select one
 automatically:
 
 ```bash
-cd /home/yecheng/bluerov_ws
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
+cd "$BLUEROV_WS"
 
 read -r -p 'Absolute path to the validated Glub target JSON: ' TARGET_CFG
 if [[ "$TARGET_CFG" == /* && -r "$TARGET_CFG" ]]; then
   ros2 launch bluerov2_control fixed_hook_pose_validation.launch.py \
-    target_config:="$TARGET_CFG"
+    target_config:="$TARGET_CFG" \
+    acados_source_dir:="$ACADOS_SOURCE_DIR" \
+    trial_output_dir:="$TRIALS_DIR"
 else
   echo "Target file is missing or is not an absolute path; launch not started."
 fi
@@ -321,8 +323,6 @@ default `0.12` still requires a supervised check of actual depth-hold authority.
 Keep the vehicle DISARMED. In the diagnostic terminal:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
-
 ros2 node list | sort | grep -E 'fixed_hook|mocap_ekf|offboard_enable'
 ros2 topic info -v /glub/fmu/in/offboard_control_mode
 ros2 topic info -v /glub/fmu/in/vehicle_command
@@ -366,8 +366,6 @@ With the vehicle still DISARMED, clear both permission gates and monitor ACKs
 in a dedicated terminal:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
-
 ros2 topic pub --once /bluerov2/fixed_hook/mission_enable \
   std_msgs/msg/Bool '{data: false}'
 ros2 topic pub --once /bluerov2/fixed_hook/offboard_request_enable \
@@ -381,8 +379,6 @@ After all checks pass and manual takeover is ready, request Offboard from
 another terminal:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
-
 ros2 topic pub --once /bluerov2/fixed_hook/offboard_request_enable \
   std_msgs/msg/Bool '{data: true}'
 ros2 topic echo /glub/fmu/out/vehicle_control_mode --once --qos-profile sensor_data
@@ -398,7 +394,6 @@ Open a separate interactive terminal for Hook confirmation and leave it in
 the foreground:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
 ros2 run bluerov2_control confirm_hook_keyboard
 ```
 
@@ -409,7 +404,6 @@ ARM manually in QGC with personnel clear and the operator ready. In the
 motion-permission terminal, verify both flags before proceeding:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
 ros2 topic echo /glub/fmu/out/vehicle_control_mode --once --qos-profile sensor_data
 ```
 
@@ -460,7 +454,6 @@ controller completion. Note any difference between physical retrieval and
 the reported controller state:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
 ros2 run bluerov2_control mark_trial_event success \
   --note 'Operator confirmed Glub retrieval and return to pre-hook'
 ```
@@ -474,8 +467,6 @@ have stopped. Plan for buoyancy and tether motion; DISARM is not depth hold.
 Then clear permissions while the launch and recorder are still running:
 
 ```bash
-source /home/yecheng/bluerov_ws/src/bluerov2_control/scripts/source_fixed_hook_real.bash
-
 ros2 topic pub --once /bluerov2/fixed_hook/mission_enable \
   std_msgs/msg/Bool '{data: false}'
 ros2 topic pub --once /bluerov2/fixed_hook/offboard_request_enable \
@@ -509,7 +500,7 @@ does not restore motion permission.
 ## 13. Check and retain the trial data
 
 The launch automatically creates a timestamped directory under
-`/home/yecheng/bluerov_ws/bluerov2_payload_retrieval_trials` containing:
+`$TRIALS_DIR` containing:
 
 - `samples.csv`: raw MoCap, EKF/controller odometry, control inputs, and
   permission/mode feedback;
@@ -520,7 +511,7 @@ After shutdown, inspect the directory printed by the logger and the bag path
 from Section 6:
 
 ```bash
-ls -lt /home/yecheng/bluerov_ws/bluerov2_payload_retrieval_trials | head
+ls -lt "$TRIALS_DIR" | head
 ```
 
 Keep the target JSON, CSV directory, bag, launch logs, and video together in
