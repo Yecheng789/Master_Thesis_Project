@@ -7,6 +7,7 @@ import argparse
 import csv
 import json
 import math
+import os
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -79,10 +80,24 @@ class Trial:
         return float(self.spec["analysis_end_ros_s"])
 
 
-def parse_args() -> argparse.Namespace:
+def _default_trials_root(package_root: Path) -> Path:
+    """Locate archived trials in either ROS source layout or an explicit path."""
+    if os.environ.get("TRIALS_DIR"):
+        return Path(os.environ["TRIALS_DIR"]).expanduser()
+    if os.environ.get("BLUEROV_WS"):
+        workspace = Path(os.environ["BLUEROV_WS"]).expanduser()
+    else:
+        workspace = next(
+            (parent.parent for parent in package_root.parents
+             if parent.name == "src"),
+            Path.home() / "bluerov_ws",
+        )
+    return workspace / "bluerov2_payload_retrieval_trials"
+
+
+def parse_args(argv=None) -> argparse.Namespace:
     script_path = Path(__file__).resolve()
-    workspace = script_path.parents[3]
-    default_root = workspace / "bluerov2_payload_retrieval_trials"
+    default_root = _default_trials_root(script_path.parents[1])
     parser = argparse.ArgumentParser(
         description=(
             "Create vector and high-resolution raster paper figures from "
@@ -104,10 +119,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=default_root / "paper_figures_three_success",
+        default=None,
         help="Destination for figures, metrics, and captions.",
     )
-    return parser.parse_args()
+    args = parser.parse_args(argv)
+    if args.output_dir is None:
+        args.output_dir = args.trials_root / "paper_figures_three_success"
+    return args
 
 
 def configure_plot_style() -> None:
@@ -1124,7 +1142,7 @@ success.
 export BLUEROV_WS="${{BLUEROV_WS:-$HOME/bluerov_ws}}"
 cd "$BLUEROV_WS"
 MPLCONFIGDIR=/tmp/bluerov_paper_mpl python3 \\
-  src/bluerov2_control/scripts/plot_three_success_trials.py
+  src/Master_Thesis_Project/BlueROV2_Control/scripts/plot_three_success_trials.py
 ```
 """
     (output_dir / "README.md").write_text(readme, encoding="utf-8")

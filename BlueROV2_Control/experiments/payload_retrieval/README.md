@@ -46,7 +46,10 @@ including their CSV files and metadata, under
 - `retrieval_right_side_of_the_box_success`
 - `retrieval_directly_in_front_of_the_box_success`
 
-These datasets are not included in a source-only checkout. Preserve the
+These datasets are not included in a source-only checkout. Download them from
+the [experimental-assets release](https://github.com/Yecheng789/Master_Thesis_Project/releases/tag/experimental-assets-2026-11-02)
+and set `TRIALS_DIR` to the directory containing the three trial folders.
+Preserve the
 associated [phase annotations](../../scripts/three_success_trial_annotations.json)
 and [controller-event evidence](../../scripts/three-success-controller-event-evidence.md).
 
@@ -62,7 +65,7 @@ recording. For Glub:
 ```bash
 cd "$BLUEROV_WS"
 
-TARGET_CFG="$BLUEROV_WS/src/bluerov2_control/experiments/payload_retrieval/config/hooked_box_target_pose_glub_$(date +%Y%m%d_%H%M%S).json"
+TARGET_CFG="$BLUEROV_WS/src/Master_Thesis_Project/BlueROV2_Control/experiments/payload_retrieval/config/hooked_box_target_pose_glub_$(date +%Y%m%d_%H%M%S).json"
 
 if ros2 run bluerov2_control record_mocap_target_pose \
   --topic /mocap/glub/pose \
@@ -164,7 +167,7 @@ cd "$BLUEROV_WS"
 FIGURE_DIR=$(mktemp -d "$TRIALS_DIR/paper_figures.XXXXXX")
 
 MPLCONFIGDIR=/tmp/bluerov-paper-mpl python3 \
-  src/bluerov2_control/scripts/plot_three_success_trials.py \
+  src/Master_Thesis_Project/BlueROV2_Control/scripts/plot_three_success_trials.py \
   --trials-root "$TRIALS_DIR" \
   --output-dir "$FIGURE_DIR"
 ```

@@ -8,6 +8,7 @@ import csv
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 
 from bluerov2_control.research.trial_data_logger import SAMPLE_FIELDS
@@ -25,10 +26,24 @@ from launch_ros.utilities import evaluate_parameters
 import pytest
 
 
+def _default_trials_root(package_root: Path) -> Path:
+    """Locate archived trials in either ROS source layout or an explicit path."""
+    if os.environ.get('TRIALS_DIR'):
+        return Path(os.environ['TRIALS_DIR']).expanduser()
+    if os.environ.get('BLUEROV_WS'):
+        workspace = Path(os.environ['BLUEROV_WS']).expanduser()
+    else:
+        workspace = next(
+            (parent.parent for parent in package_root.parents
+             if parent.name == 'src'),
+            Path.home() / 'bluerov_ws',
+        )
+    return workspace / 'bluerov2_payload_retrieval_trials'
+
+
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 TRIAL_ROOT = (
-    PACKAGE_ROOT.parents[1]
-    / 'bluerov2_payload_retrieval_trials'
+    _default_trials_root(PACKAGE_ROOT)
     / 'retrieval_directly_in_front_of_the_box_success'
 )
 CONFIG_ROOT = PACKAGE_ROOT / 'experiments' / 'payload_retrieval' / 'config'

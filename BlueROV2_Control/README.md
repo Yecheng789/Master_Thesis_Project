@@ -17,9 +17,13 @@ export BLUEROV_WS="${BLUEROV_WS:-$HOME/bluerov_ws}"
 export ACADOS_SOURCE_DIR="${ACADOS_SOURCE_DIR:-$HOME/acados}"
 
 mkdir -p "$BLUEROV_WS/src"
-git clone https://github.com/Yecheng789/Bluerov2_Glub.git \
-  "$BLUEROV_WS/src/bluerov2_control"
+git clone https://github.com/Yecheng789/Master_Thesis_Project.git \
+  "$BLUEROV_WS/src/Master_Thesis_Project"
 ```
+
+The package is located at `src/Master_Thesis_Project/BlueROV2_Control`.
+Its ROS and Python package name remains `bluerov2_control`. Keep only one
+copy of this package in the workspace so that colcon can discover it uniquely.
 
 Place the PX4 message sources matching the deployed firmware at
 `$BLUEROV_WS/src/px4_msgs` before building. This repository does
@@ -39,7 +43,7 @@ source /opt/ros/jazzy/setup.bash
 export LD_LIBRARY_PATH="$ACADOS_SOURCE_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
 rosdep update
-rosdep install --from-paths src/bluerov2_control src/px4_msgs \
+rosdep install --from-paths src/Master_Thesis_Project/BlueROV2_Control src/px4_msgs \
   --ignore-src --rosdistro jazzy --skip-keys python3-casadi -y
 
 python3 -c "import numpy, casadi, acados_template"
@@ -237,10 +241,10 @@ from the workspace root with no live control launch:
 
 ```bash
 cd "$BLUEROV_WS"
-python3 -m pytest -q src/bluerov2_control/test \
-  --ignore=src/bluerov2_control/test/test_copyright.py \
-  --ignore=src/bluerov2_control/test/test_flake8.py \
-  --ignore=src/bluerov2_control/test/test_pep257.py
+python3 -m pytest -q src/Master_Thesis_Project/BlueROV2_Control/test \
+  --ignore=src/Master_Thesis_Project/BlueROV2_Control/test/test_copyright.py \
+  --ignore=src/Master_Thesis_Project/BlueROV2_Control/test/test_flake8.py \
+  --ignore=src/Master_Thesis_Project/BlueROV2_Control/test/test_pep257.py
 ```
 
 Copyright and style checks are separate. The recorded-baseline audit requires

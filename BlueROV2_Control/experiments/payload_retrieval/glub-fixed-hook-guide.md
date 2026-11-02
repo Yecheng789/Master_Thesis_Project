@@ -198,7 +198,7 @@ reproduced. Record from Glub's raw MoCap topic:
 ```bash
 cd "$BLUEROV_WS"
 
-TARGET_CFG="$BLUEROV_WS/src/bluerov2_control/experiments/payload_retrieval/config/hooked_box_target_pose_glub_$(date +%Y%m%d_%H%M%S).json"
+TARGET_CFG="$BLUEROV_WS/src/Master_Thesis_Project/BlueROV2_Control/experiments/payload_retrieval/config/hooked_box_target_pose_glub_$(date +%Y%m%d_%H%M%S).json"
 
 if ros2 run bluerov2_control record_mocap_target_pose \
   --topic /mocap/glub/pose \

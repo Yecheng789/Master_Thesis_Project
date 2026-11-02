@@ -201,7 +201,7 @@ to be reproduced. Keep automatic control stopped while recording:
 ```bash
 cd "$BLUEROV_WS"
 
-TARGET_CFG="$BLUEROV_WS/src/bluerov2_control/experiments/payload_retrieval/config/hooked_box_target_pose_splash_$(date +%Y%m%d_%H%M%S).json"
+TARGET_CFG="$BLUEROV_WS/src/Master_Thesis_Project/BlueROV2_Control/experiments/payload_retrieval/config/hooked_box_target_pose_splash_$(date +%Y%m%d_%H%M%S).json"
 if ros2 run bluerov2_control record_mocap_target_pose \
   --topic /mocap/splash/pose \
   --message-type pose \
@@ -236,9 +236,9 @@ target pose all unchanged. If any condition cannot be confirmed, record a new ta
 Inspect the manifest and its unchanged source:
 
 ```bash
-TARGET_CFG="$BLUEROV_WS/src/bluerov2_control/experiments/payload_retrieval/config/hooked_box_target_pose_splash_from_splash_fb_20260819_170318.json"
+TARGET_CFG="$BLUEROV_WS/src/Master_Thesis_Project/BlueROV2_Control/experiments/payload_retrieval/config/hooked_box_target_pose_splash_from_splash_fb_20260819_170318.json"
 python3 -m json.tool "$TARGET_CFG"
-sha256sum "$BLUEROV_WS/src/bluerov2_control/experiments/payload_retrieval/config/hooked_box_target_pose_splash_20260819_170318.json"
+sha256sum "$BLUEROV_WS/src/Master_Thesis_Project/BlueROV2_Control/experiments/payload_retrieval/config/hooked_box_target_pose_splash_20260819_170318.json"
 ```
 
 The source SHA-256 must be exactly:
